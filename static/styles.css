@@ -437,6 +437,18 @@ textarea {
   color: var(--ink);
 }
 
+.document-content .source-hit {
+  background: #fff2a8;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.document-content li.source-hit {
+  padding-left: 4px;
+}
+
 @media (max-width: 640px) {
   .shell {
     width: min(100vw - 20px, 1100px);

@@ -99,6 +99,68 @@ function renderSimpleMarkdown(markdown) {
   return html.join("");
 }
 
+function renderDocumentMarkdown(markdown, startLine, endLine) {
+  const lines = String(markdown).split(/\r?\n/);
+  const html = [];
+  let listType = null;
+
+  function closeList() {
+    if (!listType) return;
+    html.push(`</${listType}>`);
+    listType = null;
+  }
+
+  function lineClass(lineNumber) {
+    return startLine && endLine && lineNumber >= startLine && lineNumber <= endLine ? ' class="source-hit"' : "";
+  }
+
+  lines.forEach((rawLine, index) => {
+    const lineNumber = index + 1;
+    const line = rawLine.trimEnd();
+    const className = lineClass(lineNumber);
+    if (!line.trim()) {
+      closeList();
+      return;
+    }
+
+    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+    if (heading) {
+      closeList();
+      const level = Math.min(heading[1].length + 2, 6);
+      html.push(`<h${level}${className} data-line="${lineNumber}">${renderInlineMarkdown(heading[2])}</h${level}>`);
+      return;
+    }
+
+    const unordered = /^[-*]\s+(.+)$/.exec(line);
+    if (unordered) {
+      if (listType !== "ul") {
+        closeList();
+        html.push("<ul>");
+        listType = "ul";
+      }
+      html.push(`<li${className} data-line="${lineNumber}">${renderInlineMarkdown(unordered[1])}</li>`);
+      return;
+    }
+
+    const ordered = /^\d+[.)]\s+(.+)$/.exec(line);
+    if (ordered) {
+      if (listType !== "ol") {
+        closeList();
+        html.push("<ol>");
+        listType = "ol";
+      }
+      html.push(`<li${className} data-line="${lineNumber}">${renderInlineMarkdown(ordered[1])}</li>`);
+      return;
+    }
+
+    closeList();
+    html.push(`<p${className} data-line="${lineNumber}">${renderInlineMarkdown(line)}</p>`);
+  });
+
+  closeList();
+  return html.join("");
+}
+
 function renderInlineMarkdown(text) {
   return escapeHtml(text)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -125,7 +187,7 @@ function renderSources(container, items) {
     div.innerHTML = `
       <strong>[${escapeHtml(item.source_id || `S${index + 1}`)}] ${escapeHtml(item.title)}</strong>
       <span>${escapeHtml(item.date)} · ${escapeHtml(item.heading)} · linie ${item.start_line}-${item.end_line}</span>
-      <button class="source-link" type="button" data-document-path="${escapeHtml(item.path)}">${escapeHtml(item.path)}</button>
+      <button class="source-link" type="button" data-document-path="${escapeHtml(item.path)}" data-start-line="${item.start_line}" data-end-line="${item.end_line}">${escapeHtml(item.path)}</button>
     `;
     list.appendChild(div);
   });
@@ -182,7 +244,7 @@ messages.addEventListener("click", async (event) => {
 
   const button = event.target.closest("[data-document-path]");
   if (!button) return;
-  await openDocument(button.dataset.documentPath);
+  await openDocument(button.dataset.documentPath, Number(button.dataset.startLine), Number(button.dataset.endLine));
 });
 
 async function copyAnswer(button) {
@@ -220,7 +282,7 @@ function showCopyState(button, label) {
   }, 1200);
 }
 
-async function openDocument(path) {
+async function openDocument(path, startLine, endLine) {
   showModal("Ładowanie dokumentu...", path, "");
   try {
     const response = await fetch(appUrl(`/api/document?path=${encodeURIComponent(path)}`));
@@ -229,18 +291,22 @@ async function openDocument(path) {
       showModal("Nie udało się otworzyć dokumentu", path, data.error || "Błąd pobierania dokumentu.");
       return;
     }
-    showModal(data.title, data.path, data.content);
+    showModal(data.title, data.path, data.content, startLine, endLine);
   } catch (error) {
     showModal("Nie udało się otworzyć dokumentu", path, `Błąd połączenia: ${error}`);
   }
 }
 
-function showModal(title, path, markdown) {
+function showModal(title, path, markdown, startLine, endLine) {
   modalTitle.textContent = title;
-  modalPath.textContent = path;
-  modalContent.innerHTML = renderSimpleMarkdown(markdown || "");
+  modalPath.textContent = startLine && endLine ? `${path} · linie ${startLine}-${endLine}` : path;
+  modalContent.innerHTML = renderDocumentMarkdown(markdown || "", startLine, endLine);
   modal.hidden = false;
   document.body.classList.add("modal-open");
+  const firstHit = modalContent.querySelector(".source-hit");
+  if (firstHit) {
+    window.setTimeout(() => firstHit.scrollIntoView({ block: "center" }), 0);
+  }
 }
 
 function closeModal() {
