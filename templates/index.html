@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>{{ title }}</h1>
+          <p>Liczba dokumentów: {{ stats.documents }}.</p>
+          <p class="ai-warning">Aplikacja korzysta ze sztucznej inteligencji, która może niepoprawnie interpretować przepisy i udzielać błędnych odpowiedzi. Zaleca się ich zweryfikowanie w źródłowych regulaminach i zarządzeniach.</p>
+        </div>
+        <form method="post" action="{{ url_for('logout') }}">
+          <button class="logout-button" type="submit">Wyloguj</button>
+        </form>
+      </section>
+
+      <section class="chat" id="messages">
+        <article class="message assistant">
+          <p>Zadaj pytanie dotyczące regulaminów lub zarządzeń obowiązujących 
+            w Instytucie Historii PAN.</p>
+        </article>
+      </section>
+
+      <form class="composer" id="chat-form">
+        <textarea id="message" rows="3" placeholder="Np. Czy w IH PAN ustala się plan urlopów?"></textarea>
+        <button type="submit" title="Wyślij">➤</button>
+      </form>
+    </main>
+
+    <div class="modal" id="document-modal" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="document-title">
+        <header class="modal-header">
+          <div>
+            <h2 id="document-title">Dokument</h2>
+            <p id="document-path"></p>
+          </div>
+          <button id="document-close" type="button" title="Zamknij">×</button>
+        </header>
+        <div class="document-content" id="document-content"></div>
+      </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

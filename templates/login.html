@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Logowanie · {{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-panel">
+        <h1>{{ title }}</h1>
+        <p>Dostęp do aplikacji wymaga zalogowania.</p>
+        {% if error %}
+          <p class="login-error">{{ error }}</p>
+        {% endif %}
+        <form class="login-form" method="post">
+          <label>
+            Login
+            <input name="username" autocomplete="username" required autofocus>
+          </label>
+          <label>
+            Hasło
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button type="submit">Zaloguj</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
