@@ -46,6 +46,9 @@
       </section>
     </div>
 
+    <script>
+      window.APP_BASE = {{ request.script_root|tojson }};
+    </script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
   </body>
 </html>

@@ -4,6 +4,7 @@ import hmac
 from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import APP_TITLE, AUTH_PASSWORD, AUTH_USERNAME, MD_DIR, SEARCH_LIMIT, SECRET_KEY
 from llm import answer_with_gemini, attach_source_ids, cited_sources
@@ -12,6 +13,7 @@ from rag import KnowledgeBase
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 kb = KnowledgeBase(MD_DIR)
 
 
@@ -30,7 +32,8 @@ def require_login():
         return None
     if wants_json_response():
         return jsonify({"error": "Wymagane logowanie."}), 401
-    return redirect(url_for("login", next=request.full_path))
+    next_url = f"{request.script_root}{request.full_path}"
+    return redirect(url_for("login", next=next_url))
 
 
 @app.route("/login", methods=["GET", "POST"])

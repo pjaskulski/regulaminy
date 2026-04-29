@@ -6,6 +6,11 @@ const modalTitle = document.querySelector("#document-title");
 const modalPath = document.querySelector("#document-path");
 const modalContent = document.querySelector("#document-content");
 const modalClose = document.querySelector("#document-close");
+const appBase = (window.APP_BASE || "").replace(/\/$/, "");
+
+function appUrl(path) {
+  return `${appBase}${path}`;
+}
 
 function addMessage(role, text) {
   const article = document.createElement("article");
@@ -145,7 +150,7 @@ form.addEventListener("submit", async (event) => {
   const pending = addMessage("assistant", "Szukam w dokumentach...");
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch(appUrl("/api/chat"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
@@ -218,7 +223,7 @@ function showCopyState(button, label) {
 async function openDocument(path) {
   showModal("Ładowanie dokumentu...", path, "");
   try {
-    const response = await fetch(`/api/document?path=${encodeURIComponent(path)}`);
+    const response = await fetch(appUrl(`/api/document?path=${encodeURIComponent(path)}`));
     const data = await response.json();
     if (!response.ok) {
       showModal("Nie udało się otworzyć dokumentu", path, data.error || "Błąd pobierania dokumentu.");
