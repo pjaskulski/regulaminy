@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from typing import Any
 
-from config import GEMINI_MODEL, GOOGLE_API_KEY, MAX_CONTEXT_CHARS
+from config import GEMINI_MAX_OUTPUT_TOKENS, GEMINI_MODEL, GOOGLE_API_KEY, MAX_CONTEXT_CHARS
 
 
 SYSTEM_INSTRUCTION = """Jesteś asystentem IH PAN odpowiadającym na pytania o regulaminy, zarządzenia i instrukcje.
@@ -18,6 +19,13 @@ Odpowiadaj po polsku, rzeczowo i zwięźle."""
 
 
 CITATION_RE = re.compile(r"\bS(?P<number>\d+)\b")
+
+
+@dataclass
+class GeminiAnswer:
+    text: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+    retried: bool = False
 
 
 def attach_source_ids(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -69,9 +77,56 @@ def fallback_answer(question: str, chunks: list[dict[str, Any]], reason: str | N
     return "\n".join(lines)
 
 
-def answer_with_gemini(question: str, chunks: list[dict[str, Any]]) -> str:
+def response_metadata(response: Any) -> dict[str, Any]:
+    candidates = response.candidates or []
+    finish_reasons = []
+    finish_messages = []
+    for candidate in candidates:
+        reason = getattr(candidate, "finish_reason", None)
+        finish_reasons.append(getattr(reason, "value", reason))
+        finish_messages.append(getattr(candidate, "finish_message", None))
+
+    usage = getattr(response, "usage_metadata", None)
+    return {
+        "model_version": getattr(response, "model_version", None),
+        "finish_reasons": finish_reasons,
+        "finish_messages": finish_messages,
+        "prompt_token_count": getattr(usage, "prompt_token_count", None),
+        "candidates_token_count": getattr(usage, "candidates_token_count", None),
+        "total_token_count": getattr(usage, "total_token_count", None),
+    }
+
+
+def looks_incomplete(text: str, metadata: dict[str, Any]) -> bool:
+    finish_reasons = {str(reason) for reason in metadata.get("finish_reasons") or []}
+    if "MAX_TOKENS" in finish_reasons:
+        return True
+    stripped = text.rstrip()
+    if not stripped:
+        return True
+    if stripped.endswith(("*", "-", "•", ":", ",", ";")):
+        return True
+    if re.search(r"(?:^|\n)\s*(?:[-*]|\d+[.)])\s*$", stripped):
+        return True
+    return False
+
+
+def generate_answer(client: Any, types: Any, prompt: str) -> GeminiAnswer:
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            systemInstruction=SYSTEM_INSTRUCTION,
+            temperature=0.2,
+            maxOutputTokens=GEMINI_MAX_OUTPUT_TOKENS,
+        ),
+    )
+    return GeminiAnswer(response.text or "Model nie zwrócił treści odpowiedzi.", response_metadata(response))
+
+
+def answer_with_gemini_details(question: str, chunks: list[dict[str, Any]]) -> GeminiAnswer:
     if not GOOGLE_API_KEY:
-        return fallback_answer(question, chunks)
+        return GeminiAnswer(fallback_answer(question, chunks), {"fallback": "missing_api_key"})
 
     from google import genai
     from google.genai import types
@@ -87,19 +142,33 @@ Przygotuj odpowiedź dla pracownika instytutu. Nie wychodź poza podane fragment
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
     try:
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                systemInstruction=SYSTEM_INSTRUCTION,
-                temperature=0.2,
-                maxOutputTokens=1800,
-            ),
-        )
+        result = generate_answer(client, types, prompt)
+        if looks_incomplete(result.text, result.metadata):
+            retry_prompt = (
+                f"{prompt}\n\n"
+                "Poprzednia odpowiedź wyglądała na urwaną. Wygeneruj kompletną odpowiedź od początku. "
+                "Nie kończ na rozpoczętej liście ani samotnym znaku wypunktowania."
+            )
+            retry_result = generate_answer(client, types, retry_prompt)
+            retry_result.retried = True
+            retry_result.metadata["first_attempt"] = result.metadata
+            if looks_incomplete(retry_result.text, retry_result.metadata):
+                retry_result.text = (
+                    retry_result.text.rstrip()
+                    + "\n\nUwaga: odpowiedź modelu wygląda na urwaną. Spróbuj ponowić pytanie albo sprawdź log `REGULAMINY_TRACE_RAG=1`."
+                )
+            return retry_result
     except Exception as exc:
-        return fallback_answer(
-            question,
-            chunks,
-            reason=f"Nie udało się połączyć z Gemini (`{type(exc).__name__}`). Pokazuję najlepsze znalezione źródła.",
+        return GeminiAnswer(
+            fallback_answer(
+                question,
+                chunks,
+                reason=f"Nie udało się połączyć z Gemini (`{type(exc).__name__}`). Pokazuję najlepsze znalezione źródła.",
+            ),
+            {"fallback": "exception", "exception_type": type(exc).__name__},
         )
-    return response.text or "Model nie zwrócił treści odpowiedzi."
+    return result
+
+
+def answer_with_gemini(question: str, chunks: list[dict[str, Any]]) -> str:
+    return answer_with_gemini_details(question, chunks).text

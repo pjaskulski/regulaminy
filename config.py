@@ -18,6 +18,11 @@ def load_env_file(path: Path) -> None:
 
 load_env_file(BASE_DIR / ".env")
 
+
+def env_flag(name: str) -> bool:
+    return os.getenv(name, "").casefold() in {"1", "true", "yes", "on", "full", "verbose", "context"}
+
+
 MD_DIR = Path(os.getenv("REGULAMINY_MD_DIR", BASE_DIR / "md"))
 WIKI_DIR = Path(os.getenv("REGULAMINY_WIKI_DIR", BASE_DIR / "wiki"))
 STATE_DIR = Path(os.getenv("REGULAMINY_STATE_DIR", BASE_DIR / "state"))
@@ -31,3 +36,6 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-change-this-secret-key")
 
 MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "18000"))
 SEARCH_LIMIT = int(os.getenv("SEARCH_LIMIT", "8"))
+GEMINI_MAX_OUTPUT_TOKENS = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "3000"))
+TRACE_RAG = env_flag("REGULAMINY_TRACE_RAG")
+TRACE_RAG_FULL = os.getenv("REGULAMINY_TRACE_RAG", "").casefold() in {"full", "verbose", "context"}

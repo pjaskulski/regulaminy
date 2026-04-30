@@ -10,6 +10,7 @@ from typing import Iterable
 
 WORD_RE = re.compile(r"[0-9A-Za-zÀ-ž_/-]+", re.UNICODE)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+SECTION_RE = re.compile(r"^(?:§|\$)\s*(?P<number>\d+[a-zA-Z]?)\.?\s*(?P<title>.*)$")
 DATE_RE = re.compile(r"(?P<date>(?:19|20)\d{2}[-_]\d{2}[-_]\d{2})")
 CHANGE_RE = re.compile(
     r"\b(zmienia|zmieniaj[aą]ce|uchyla|uchyla si[eę]|aneks|otrzymuje nast[eę]puj[aą]ce brzmienie)\b",
@@ -52,6 +53,34 @@ STOPWORDS = {
 }
 
 
+PHRASE_PAIR_LEADING_SKIPWORDS = {"jak", "czy"}
+PHRASE_PAIR_INSTITUTION_WORDS = {"instytucie", "instytutu", "historii", "pan"}
+
+
+QUERY_EXPANSIONS = {
+    "staż": ["wysługa", "wysługę", "wysluga", "wysluge", "wieloletnia", "wieloletnią", "okres", "zatrudnienia"],
+    "staz": ["wysługa", "wysługę", "wysluga", "wysluge", "wieloletnia", "wieloletnią", "okres", "zatrudnienia"],
+    "przejąć": ["dyrektor", "rada", "naukowa", "statut", "powołuje", "powołanie", "wybory"],
+    "przejac": ["dyrektor", "rada", "naukowa", "statut", "powoluje", "powolanie", "wybory"],
+    "władzę": ["dyrektor", "rada", "naukowa", "statut", "powołuje", "powołanie", "wybory"],
+    "wladze": ["dyrektor", "rada", "naukowa", "statut", "powoluje", "powolanie", "wybory"],
+    "władza": ["dyrektor", "rada", "naukowa", "statut", "powołuje", "powołanie", "wybory"],
+    "wladza": ["dyrektor", "rada", "naukowa", "statut", "powoluje", "powolanie", "wybory"],
+    "zmienić": ["zmiana", "odwołać", "odwołanie", "odwołuje", "odwotuje", "powołać", "powołanie", "powołuje", "powoluje", "powotuje", "konkurs", "kadencja"],
+    "zmienic": ["zmiana", "odwolac", "odwolanie", "odwoluje", "odwotuje", "powolac", "powolanie", "powoluje", "powotuje", "konkurs", "kadencja"],
+    "dyrektora": ["dyrektor", "dyrektorem", "dyrektorowi", "prezes", "akademii", "rada", "kuratorów", "kuratorow"],
+    "dyrektor": ["dyrektora", "dyrektorem", "dyrektorowi", "prezes", "akademii", "rada", "kuratorów", "kuratorow"],
+    "instytutu": ["instytut", "instytucie"],
+    "instytut": ["instytutu", "instytucie"],
+    "wynagrodzenia": ["wynagradzania", "wynagrodzenie", "wynagrodzeniu", "wynagrodzeń"],
+    "wynagrodzenie": ["wynagradzania", "wynagrodzenia", "wynagrodzeniu", "wynagrodzeń"],
+    "wysokość": ["wysokości", "wysokosc", "wysokosci"],
+    "wysokosc": ["wysokość", "wysokości", "wysokosci"],
+    "wpływa": ["zależy", "przysługuje", "uwzględnia"],
+    "wplywa": ["zależy", "przysługuje", "uwzględnia"],
+}
+
+
 @dataclass
 class Document:
     path: str
@@ -81,6 +110,18 @@ def normalize(text: str) -> str:
 def tokenize(text: str) -> list[str]:
     words = [normalize(match.group(0)) for match in WORD_RE.finditer(text)]
     return [word for word in words if len(word) > 2 and word not in STOPWORDS]
+
+
+def expand_query_tokens(tokens: list[str]) -> list[str]:
+    expanded: list[str] = []
+    seen: set[str] = set()
+    for token in tokens:
+        for item in [token, *QUERY_EXPANSIONS.get(token, [])]:
+            normalized = normalize(item)
+            if normalized not in seen and len(normalized) > 2 and normalized not in STOPWORDS:
+                expanded.append(normalized)
+                seen.add(normalized)
+    return expanded
 
 
 def infer_date(path: Path, text: str) -> str:
@@ -149,14 +190,19 @@ def split_document(path: Path, text: str) -> tuple[Document, list[Chunk]]:
         current_lines = []
 
     for idx, line in enumerate(lines, start=1):
-        heading = HEADING_RE.match(line.strip())
-        starts_new_section = heading and heading.group(1) in {"##", "###", "####"}
+        stripped = line.strip()
+        heading = HEADING_RE.match(stripped)
+        section = SECTION_RE.match(stripped)
+        starts_new_section = (heading and heading.group(1) in {"##", "###", "####"}) or bool(section)
         too_large = sum(len(item) for item in current_lines) > 2600 and not line.strip()
         if (starts_new_section or too_large) and current_lines:
             flush(idx - 1)
             current_start = idx
         if heading:
             current_heading = heading.group(2).strip()
+        elif section:
+            suffix = section.group("title").strip()
+            current_heading = f"§ {section.group('number')}{'. ' + suffix if suffix else ''}"
         current_lines.append(line)
 
     if current_lines:
@@ -187,7 +233,8 @@ class KnowledgeBase:
         return {"documents": len(self.documents), "chunks": len(self.chunks)}
 
     def search(self, query: str, limit: int = 8) -> list[dict]:
-        query_tokens = tokenize(query)
+        original_query_tokens = tokenize(query)
+        query_tokens = expand_query_tokens(original_query_tokens)
         if not query_tokens:
             return []
         query_set = set(query_tokens)
@@ -198,9 +245,17 @@ class KnowledgeBase:
                 continue
             phrase_bonus = 0.0
             lowered = normalize(chunk.text)
+            lowered_haystack = normalize(f"{chunk.text} {chunk.heading} {chunk.title}")
             for term in query_tokens:
                 if term in lowered:
                     phrase_bonus += 0.15
+            for first, second in zip(original_query_tokens, original_query_tokens[1:]):
+                if first in PHRASE_PAIR_LEADING_SKIPWORDS or second in PHRASE_PAIR_LEADING_SKIPWORDS:
+                    continue
+                if first in PHRASE_PAIR_INSTITUTION_WORDS and second in PHRASE_PAIR_INSTITUTION_WORDS:
+                    continue
+                if f"{first} {second}" in lowered_haystack:
+                    phrase_bonus += 0.45
             recency_bonus = 0.2 if chunk.date >= "2024-01-01" else 0.0
             change_bonus = 0.25 if chunk.is_change else 0.0
             score = len(overlap) / math.sqrt(max(len(tokens), 1)) + phrase_bonus + recency_bonus + change_bonus
