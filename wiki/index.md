@@ -2,8 +2,8 @@
 
 To jest robocza warstwa orientacyjna. Źródłem prawdy pozostają pliki w `md/`.
 
-Liczba dokumentów: 103
-Liczba fragmentów: 807
+Liczba dokumentów: 110
+Liczba fragmentów: 1045
 
 ## Tematy
 - [regulamin-pracy](regulamin-pracy.md)
@@ -13,3 +13,4 @@ Liczba fragmentów: 807
 - [finanse-i-rachunkowosc](finanse-i-rachunkowosc.md)
 - [badania-i-konkursy](badania-i-konkursy.md)
 - [bezpieczenstwo-i-dane](bezpieczenstwo-i-dane.md)
+- [wynagrodzenia-płace-świadczenia](wynagrodzenia-płace-świadczenia.md)

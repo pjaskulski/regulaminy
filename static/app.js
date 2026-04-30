@@ -47,6 +47,7 @@ function renderSimpleMarkdown(markdown) {
   const lines = String(markdown).split(/\r?\n/);
   const html = [];
   let listType = null;
+  let table = null;
 
   function closeList() {
     if (!listType) return;
@@ -54,12 +55,43 @@ function renderSimpleMarkdown(markdown) {
     listType = null;
   }
 
-  for (const rawLine of lines) {
+  function closeTable() {
+    if (!table) return;
+    html.push("</tbody></table>");
+    table = null;
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const rawLine = lines[index];
     const line = rawLine.trimEnd();
     if (!line.trim()) {
+      if (table && isTableRow(lines[nextNonEmptyIndex(lines, index + 1)] || "")) {
+        continue;
+      }
       closeList();
+      closeTable();
       continue;
     }
+
+    const nextIndex = nextNonEmptyIndex(lines, index + 1);
+    const nextLine = lines[nextIndex] || "";
+    if (!table && isTableHeader(line, nextLine)) {
+      closeList();
+      const headers = parseTableRow(line);
+      const alignments = parseTableAlignment(nextLine);
+      html.push(renderTableHeader(headers, alignments));
+      table = { alignments };
+      index = nextIndex;
+      continue;
+    }
+
+    if (table && isTableRow(line)) {
+      closeList();
+      html.push(renderTableRow(parseTableRow(line), table.alignments));
+      continue;
+    }
+
+    closeTable();
 
     const heading = /^(#{1,6})\s+(.+)$/.exec(line);
     if (heading) {
@@ -96,6 +128,7 @@ function renderSimpleMarkdown(markdown) {
   }
 
   closeList();
+  closeTable();
   return html.join("");
 }
 
@@ -103,6 +136,7 @@ function renderDocumentMarkdown(markdown, startLine, endLine) {
   const lines = String(markdown).split(/\r?\n/);
   const html = [];
   let listType = null;
+  let table = null;
 
   function closeList() {
     if (!listType) return;
@@ -110,25 +144,56 @@ function renderDocumentMarkdown(markdown, startLine, endLine) {
     listType = null;
   }
 
+  function closeTable() {
+    if (!table) return;
+    html.push("</tbody></table>");
+    table = null;
+  }
+
   function lineClass(lineNumber) {
     return startLine && endLine && lineNumber >= startLine && lineNumber <= endLine ? ' class="source-hit"' : "";
   }
 
-  lines.forEach((rawLine, index) => {
+  for (let index = 0; index < lines.length; index += 1) {
+    const rawLine = lines[index];
     const lineNumber = index + 1;
     const line = rawLine.trimEnd();
     const className = lineClass(lineNumber);
     if (!line.trim()) {
+      if (table && isTableRow(lines[nextNonEmptyIndex(lines, index + 1)] || "")) {
+        continue;
+      }
       closeList();
-      return;
+      closeTable();
+      continue;
     }
+
+    const nextIndex = nextNonEmptyIndex(lines, index + 1);
+    const nextLine = lines[nextIndex] || "";
+    if (!table && isTableHeader(line, nextLine)) {
+      closeList();
+      const headers = parseTableRow(line);
+      const alignments = parseTableAlignment(nextLine);
+      html.push(renderTableHeader(headers, alignments, className, lineNumber));
+      table = { alignments };
+      index = nextIndex;
+      continue;
+    }
+
+    if (table && isTableRow(line)) {
+      closeList();
+      html.push(renderTableRow(parseTableRow(line), table.alignments, className, lineNumber));
+      continue;
+    }
+
+    closeTable();
 
     const heading = /^(#{1,6})\s+(.+)$/.exec(line);
     if (heading) {
       closeList();
       const level = Math.min(heading[1].length + 2, 6);
       html.push(`<h${level}${className} data-line="${lineNumber}">${renderInlineMarkdown(heading[2])}</h${level}>`);
-      return;
+      continue;
     }
 
     const unordered = /^[-*]\s+(.+)$/.exec(line);
@@ -139,7 +204,7 @@ function renderDocumentMarkdown(markdown, startLine, endLine) {
         listType = "ul";
       }
       html.push(`<li${className} data-line="${lineNumber}">${renderInlineMarkdown(unordered[1])}</li>`);
-      return;
+      continue;
     }
 
     const ordered = /^\d+[.)]\s+(.+)$/.exec(line);
@@ -150,15 +215,63 @@ function renderDocumentMarkdown(markdown, startLine, endLine) {
         listType = "ol";
       }
       html.push(`<li${className} data-line="${lineNumber}">${renderInlineMarkdown(ordered[1])}</li>`);
-      return;
+      continue;
     }
 
     closeList();
     html.push(`<p${className} data-line="${lineNumber}">${renderInlineMarkdown(line)}</p>`);
-  });
+  }
 
   closeList();
+  closeTable();
   return html.join("");
+}
+
+function isTableRow(line) {
+  return /^\s*\|.+\|\s*$/.test(line);
+}
+
+function nextNonEmptyIndex(lines, startIndex) {
+  for (let index = startIndex; index < lines.length; index += 1) {
+    if (String(lines[index]).trim()) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function isTableHeader(line, nextLine) {
+  return isTableRow(line) && isTableRow(nextLine) && parseTableAlignment(nextLine).length > 0;
+}
+
+function parseTableRow(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+function parseTableAlignment(line) {
+  const cells = parseTableRow(line);
+  if (!cells.length || !cells.every((cell) => /^:?-{3,}:?$/.test(cell))) {
+    return [];
+  }
+  return cells.map((cell) => {
+    const left = cell.startsWith(":");
+    const right = cell.endsWith(":");
+    if (left && right) return "center";
+    if (right) return "right";
+    return "left";
+  });
+}
+
+function renderTableHeader(cells, alignments, className = "", lineNumber = null) {
+  const lineAttr = lineNumber ? ` data-line="${lineNumber}"` : "";
+  const headers = cells.map((cell, index) => `<th style="text-align: ${alignments[index] || "left"}">${renderInlineMarkdown(cell)}</th>`).join("");
+  return `<table${className}${lineAttr}><thead><tr>${headers}</tr></thead><tbody>`;
+}
+
+function renderTableRow(cells, alignments, className = "", lineNumber = null) {
+  const lineAttr = lineNumber ? ` data-line="${lineNumber}"` : "";
+  const columns = cells.map((cell, index) => `<td style="text-align: ${alignments[index] || "left"}">${renderInlineMarkdown(cell)}</td>`).join("");
+  return `<tr${className}${lineAttr}>${columns}</tr>`;
 }
 
 function renderInlineMarkdown(text) {
@@ -203,46 +316,54 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const message = textarea.value.trim();
-  if (!message) return;
-  textarea.value = "";
-  addMessage("user", message);
-  const pending = addMessage("assistant", "Szukam w dokumentach...");
+if (form && textarea && messages) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = textarea.value.trim();
+    if (!message) return;
+    textarea.value = "";
+    addMessage("user", message);
+    const pending = addMessage("assistant", "Szukam w dokumentach...");
 
-  try {
-    const response = await fetch(appUrl("/api/chat"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-    const data = await response.json();
-    setMessageContent(pending.querySelector(".message-content"), data.answer || data.error || "Brak odpowiedzi.", true);
-    addCopyButton(pending);
-    renderSources(pending, data.sources || []);
-  } catch (error) {
-    setMessageContent(pending.querySelector(".message-content"), `Błąd połączenia: ${error}`, false);
-    addCopyButton(pending);
-  }
-});
+    try {
+      const response = await fetch(appUrl("/api/chat"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await response.json();
+      setMessageContent(pending.querySelector(".message-content"), data.answer || data.error || "Brak odpowiedzi.", true);
+      addCopyButton(pending);
+      renderSources(pending, data.sources || []);
+    } catch (error) {
+      setMessageContent(pending.querySelector(".message-content"), `Błąd połączenia: ${error}`, false);
+      addCopyButton(pending);
+    }
+  });
 
-textarea.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter" || event.shiftKey) return;
-  event.preventDefault();
-  if (textarea.value.trim()) {
-    form.requestSubmit();
-  }
-});
+  textarea.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    if (textarea.value.trim()) {
+      form.requestSubmit();
+    }
+  });
 
-messages.addEventListener("click", async (event) => {
-  const copyButton = event.target.closest(".copy-answer");
-  if (copyButton) {
-    await copyAnswer(copyButton);
-    return;
-  }
+  messages.addEventListener("click", async (event) => {
+    const copyButton = event.target.closest(".copy-answer");
+    if (copyButton) {
+      await copyAnswer(copyButton);
+      return;
+    }
 
-  const button = event.target.closest("[data-document-path]");
+    const button = event.target.closest("[data-document-path]");
+    if (!button) return;
+    await openDocument(button.dataset.documentPath, Number(button.dataset.startLine), Number(button.dataset.endLine));
+  });
+}
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest(".document-list-item[data-document-path]");
   if (!button) return;
   await openDocument(button.dataset.documentPath, Number(button.dataset.startLine), Number(button.dataset.endLine));
 });

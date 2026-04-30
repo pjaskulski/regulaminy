@@ -15,6 +15,7 @@ TOPICS = {
     "finanse-i-rachunkowosc": ["rachunkowości", "rachunkowosci", "kasowej", "faktura", "księg"],
     "badania-i-konkursy": ["fundusz badań", "konkurs", "projekt badawczy", "oceny pracowników"],
     "bezpieczenstwo-i-dane": ["bezpieczeństwa", "danych osobowych", "pożar", "korupcji", "mobbing"],
+    "wynagrodzenia-płace-świadczenia": ["wynagrodzenia", "płace", "świadczenia", "pensja", "wynagradzania"]
 }
 
 

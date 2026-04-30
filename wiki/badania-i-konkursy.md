@@ -4,16 +4,16 @@ Ta strona jest automatycznie wygenerowaną mapą źródeł. Nie zastępuje dokum
 
 ## Najbardziej powiązane dokumenty
 
-- BRAK_DATY - `md/2O25-04-29_Zarzadzenie_7_2025_Regulamin_Zakladowego_Funduszu_Swiadczen_Socjalnych.md` - Zarządzenie nr 7/2O25 w sprawie ustalenia Regulaminu Zakładowego Funduszu Świadczeń Socjalnych
 - 2025-07-29 - `md/2025-07-29_Zarzadzenie_17_2025_zmieniajace_zarzadzenie_Regulamin_ZFSS.md` - Zarządzenie nr 17/2025 zmieniające zarządzenie nr 7/2025 Dyrektora IH PAN z dnia 29 kwietnia 2025 r. (zmiana/aneks/uchylenie)
 - 2025-05-16 - `md/2025-05-16_Zarzadzenie_12_2025_zmieniajace_Regulamin_pracy.md` - Zarządzenie nr 12/2025 zmieniające Regulamin pracy IH PAN oraz uchylające inne zarządzenie (zmiana/aneks/uchylenie)
-- 2025-04-29 - `md/2025-04-29_Zarzadzenie_7_2025_Regulamin_Zakladowego_Funduszu_Swiadczen_Socjalnych.md` - Zarządzenie nr 7l2O25 w sprawie ustalenia ReguIaminu Zakładowego Funduszu Świadczeń Socjalnych
+- 2025-04-29 - `md/2025_04-29_Zarzadzenie-7-2025_Regulamin-Zakladowego-Funduszu-Swiadczen-Socjalnych.md` - Zarządzenie nr 7/2025
+- 2025-04-29 - `md/2025-04-29_Zarzadzenie_7_2025_Regulamin_Zakladowego_Funduszu_Swiadczen_Socjalnych.md` - Zarządzenie nr 7/2O25 w sprawie ustalenia Regulaminu Zakładowego Funduszu Świadczeń Socjalnych
+- 2025-03-25 - `md/2025-03-25_Jednolity-tekst-Statutu-IH-PAN_25-marca-2025.md` - STATUT INSTYTUTU HISTORII im. Tadeusza Manteuffla POLSKIEJ AKADEMII NAUK
 - 2025-02-04 - `md/2025-02-04_Zarzadzenie_1_2025_Zmieniajace_Regulamin_organizacyjny.md` - Zarządzenie nr 1/2025 zmieniające Regulamin organizacyjny (zmiana/aneks/uchylenie)
 - 2024-12-30 - `md/2024-12-30_Zarzadzenie_25_2024_Regulamin_konkursow_naukowych.md` - Zarządzenie nr 25/2024 w sprawie ustalenia sposobu i trybu przeprowadzania konkursów
 - 2024-12-19 - `md/2024-12-19_Regulamin_przeprowadzania_konkursow_na_stanowiska_pracownikow_naukowych.md` - Regulamin przeprowadzania konkursów na stanowiska pracowników naukowych
 - 2024-11-19 - `md/2024-11-19_Zarzadzenie_21_2024_ZFSS.md` - Zarządzenie nr 21/2024 zmieniające Regulamin Zakładowego Funduszu Świadczeń Socjalnych (zmiana/aneks/uchylenie)
 - 2024-11-06 - `md/2024-11-06_Zarzadzenie_20_2024_zmieniajace_zarzadzenie_17_2024_Regulamin_dokonywania_zgloszen_narusze.md` - Zarządzenie nr 20/2024 zmieniające zarządzenie nr 17/2024 Dyrektora IH PAN z dnia 9 października 2024 r. (zmiana/aneks/uchylenie)
-- 2024-10-09 - `md/2024-10-09_Zarzadzenie_17_2024_Regulamin_dokonywania_zgloszen_naruszen_prawa.md` - Zarządzenie nr 17/2024 w sprawie wprowadzenia Regulaminu dokonywania zgłoszeń naruszeń prawa
 - 2024-07-10 - `md/2024-07-10_Zarzadzenie_11_2024_regulamin_komisji_wydawniczej.md` - Zarządzenie nr t1l2024 w sprawie ustalenia Regulaminu Komisji Wydawniczej
 - 2024-03-15 - `md/2024-03-15_Zarzadzenie_6_2024_Uchylenie_regulaminow.md` - Zarządzenie nr 6/2024 uchylające niektóre zarządzenia Dyrektora IH PAN (zmiana/aneks/uchylenie)
 - 2024-02-13 - `md/2024-02-13_Zarzadzenie_5_2024_zmieniajace_Regulamin_pracy.md` - Zarządzenie nr 5/2024 zmieniające Regulamin pracy Instytutu Historii Polskiej Akademii Nauk z dnia 25 maja (zmiana/aneks/uchylenie)

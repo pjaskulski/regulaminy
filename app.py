@@ -69,6 +69,16 @@ def index():
     return render_template("index.html", title=APP_TITLE, stats=kb.stats())
 
 
+@app.get("/documents")
+def documents():
+    return render_template(
+        "documents.html",
+        title=APP_TITLE,
+        documents=sorted(kb.documents, key=lambda document: (document.date, document.title), reverse=True),
+        stats=kb.stats(),
+    )
+
+
 @app.get("/api/status")
 def status():
     return jsonify({"ok": True, **kb.stats()})

@@ -3,36 +3,41 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title }}</title>
+    <title>Dokumenty · {{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
-    <main class="shell">
+    <main class="shell documents-shell">
       <section class="topbar">
         <div>
-          <h1>{{ title }}</h1>
+          <h1>Dokumenty Markdown</h1>
           <p>Liczba dokumentów: {{ stats.documents }}.</p>
-          <p class="ai-warning">Aplikacja korzysta ze sztucznej inteligencji, która może niepoprawnie interpretować przepisy i udzielać błędnych odpowiedzi. Zaleca się ich zweryfikowanie w źródłowych regulaminach i zarządzeniach.</p>
         </div>
         <div class="topbar-actions">
-          <a class="documents-link" href="{{ url_for('documents') }}" target="_blank" rel="noopener">Dokumenty</a>
+          <a class="documents-link" href="{{ url_for('index') }}">Chat</a>
           <form method="post" action="{{ url_for('logout') }}">
             <button class="logout-button" type="submit">Wyloguj</button>
           </form>
         </div>
       </section>
 
-      <section class="chat" id="messages">
-        <article class="message assistant">
-          <p>Zadaj pytanie dotyczące regulaminów lub zarządzeń obowiązujących 
-            w Instytucie Historii PAN.</p>
-        </article>
+      <section class="documents-list" aria-label="Lista dokumentów Markdown">
+        {% for document in documents %}
+          <button
+            class="document-list-item"
+            type="button"
+            data-document-path="{{ document.path }}"
+          >
+            <span class="document-list-title">{{ document.path|replace("md/", "") }}</span>
+            <span class="document-list-meta">
+              {{ document.title }} · {{ document.date }} · {{ document.kind }}{% if document.is_change %} · zmiana/aneks/uchylenie{% endif %}
+            </span>
+            <span class="document-list-path">{{ document.path }}</span>
+          </button>
+        {% else %}
+          <p>Brak dokumentów Markdown.</p>
+        {% endfor %}
       </section>
-
-      <form class="composer" id="chat-form">
-        <textarea id="message" rows="3" placeholder="Np. Czy w IH PAN ustala się plan urlopów?"></textarea>
-        <button type="submit" title="Wyślij">➤</button>
-      </form>
     </main>
 
     <div class="modal" id="document-modal" hidden>
