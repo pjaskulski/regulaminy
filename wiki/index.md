@@ -13,4 +13,4 @@ Liczba fragmentów: 1045
 - [finanse-i-rachunkowosc](finanse-i-rachunkowosc.md)
 - [badania-i-konkursy](badania-i-konkursy.md)
 - [bezpieczenstwo-i-dane](bezpieczenstwo-i-dane.md)
-- [wynagrodzenia-płace-świadczenia](wynagrodzenia-płace-świadczenia.md)
+- [wynagrodzenia-place-swiadczenia](wynagrodzenia-place-swiadczenia.md)
