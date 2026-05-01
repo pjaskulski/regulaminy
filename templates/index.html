@@ -15,7 +15,7 @@
           <p class="ai-warning">Aplikacja korzysta ze sztucznej inteligencji, która może niepoprawnie interpretować przepisy i udzielać błędnych odpowiedzi. Zaleca się ich zweryfikowanie w źródłowych regulaminach i zarządzeniach.</p>
         </div>
         <div class="topbar-actions">
-          <a class="documents-link" href="{{ url_for('documents') }}" target="_blank" rel="noopener">Dokumenty</a>
+          <a class="documents-link" href="{{ url_for('documents') }}" rel="noopener">Dokumenty</a>
           <form method="post" action="{{ url_for('logout') }}">
             <button class="logout-button" type="submit">Wyloguj</button>
           </form>
