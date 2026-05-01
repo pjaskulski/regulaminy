@@ -343,6 +343,12 @@ button:disabled {
   margin: 12px 0 16px;
 }
 
+.composer-actions {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
 textarea {
   width: 100%;
   resize: vertical;
@@ -471,6 +477,36 @@ textarea {
   flex: 0 0 auto;
 }
 
+.examples-panel {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.examples-content {
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  padding: 18px;
+}
+
+.example-question {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfbfa;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.example-question:hover {
+  border-color: #b7d3c9;
+  background: #f2f8f5;
+}
+
 .document-content {
   overflow: auto;
   padding: 18px;
@@ -577,6 +613,10 @@ textarea {
 
   .message {
     max-width: 100%;
+  }
+
+  .composer {
+    grid-template-columns: 1fr 44px;
   }
 
   .modal {

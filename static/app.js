@@ -6,6 +6,9 @@ const modalTitle = document.querySelector("#document-title");
 const modalPath = document.querySelector("#document-path");
 const modalContent = document.querySelector("#document-content");
 const modalClose = document.querySelector("#document-close");
+const examplesModal = document.querySelector("#examples-modal");
+const examplesOpen = document.querySelector("#examples-open");
+const examplesClose = document.querySelector("#examples-close");
 const appBase = (window.APP_BASE || "").replace(/\/$/, "");
 
 function appUrl(path) {
@@ -435,10 +438,39 @@ function closeModal() {
   document.body.classList.remove("modal-open");
 }
 
+function openExamplesModal() {
+  examplesModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeExamplesModal() {
+  examplesModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+if (examplesModal && examplesOpen && examplesClose && textarea) {
+  examplesOpen.addEventListener("click", openExamplesModal);
+  examplesClose.addEventListener("click", closeExamplesModal);
+  examplesModal.addEventListener("click", (event) => {
+    if (event.target.matches("[data-close-examples]")) {
+      closeExamplesModal();
+      return;
+    }
+
+    const button = event.target.closest(".example-question");
+    if (!button) return;
+    textarea.value = button.textContent.trim();
+    textarea.focus();
+    closeExamplesModal();
+  });
+}
+
 modalClose.addEventListener("click", closeModal);
 modal.addEventListener("click", (event) => {
   if (event.target.matches("[data-close-modal]")) closeModal();
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !modal.hidden) closeModal();
+  if (event.key !== "Escape") return;
+  if (examplesModal && !examplesModal.hidden) closeExamplesModal();
+  if (!modal.hidden) closeModal();
 });

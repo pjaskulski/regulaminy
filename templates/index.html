@@ -31,9 +31,37 @@
 
       <form class="composer" id="chat-form">
         <textarea id="message" rows="3" placeholder="Np. Czy w IH PAN ustala się plan urlopów?"></textarea>
-        <button type="submit" title="Wyślij">➤</button>
+        <div class="composer-actions">
+          <button type="submit" title="Wyślij">➤</button>
+          <button id="examples-open" type="button" title="Przykładowe zapytania">?</button>
+        </div>
       </form>
     </main>
+
+    <div class="modal" id="examples-modal" hidden>
+      <div class="modal-backdrop" data-close-examples></div>
+      <section class="modal-panel examples-panel" role="dialog" aria-modal="true" aria-labelledby="examples-title">
+        <header class="modal-header">
+          <div>
+            <h2 id="examples-title">Przykładowe zapytania</h2>
+            <p>Kliknij pytanie, aby wkleić je do pola zapytania.</p>
+          </div>
+          <button id="examples-close" type="button" title="Zamknij">×</button>
+        </header>
+        <div class="examples-content">
+          <button type="button" class="example-question">Czy w IHPAN ustala się plan urlopów?</button>
+          <button type="button" class="example-question">Czy świadczenia świąteczne przysługują także emerytom?</button>
+          <button type="button" class="example-question">Czy staż pracy wpływa na wysokość wynagrodzenia w Instytucie Historii PAN?</button>
+          <button type="button" class="example-question">Jaka jest kwota zapomogi losowej w przypadku średniego miesięcznego dochodu brutto przypadającego na jedną osobę w gospodarstwie domowym poniżej 2000 złotych?</button>
+          <button type="button" class="example-question">Jak dostać dofinansowanie do wyjazdu na konferencję?</button>
+          <button type="button" class="example-question">Czy IHPAN wypłaca "trzynastki"?</button>
+          <button type="button" class="example-question">Czy pracownikom Instytutu przysługują strój służbowy i czapka?</button>
+          <button type="button" class="example-question">Czy Instytut przyznaje jakieś odznaczenia lub medal?</button>
+          <button type="button" class="example-question">Jaki jest skład Komisji Socjalnej w Instytucie Historii?</button>
+          <button type="button" class="example-question">Jakie dodatkowe dni wolne obowiązują w 2026 roku w Instytucie Historii?</button>
+        </div>
+      </section>
+    </div>
 
     <div class="modal" id="document-modal" hidden>
       <div class="modal-backdrop" data-close-modal></div>
