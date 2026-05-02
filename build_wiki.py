@@ -145,8 +145,8 @@ TOPIC_FILE_KEYWORDS = {
     ],
     "wynajem-sal": ["wynajmu_sal"],
     "nostryfikacja": ["nostryfikacja"],
-    "mobbing": ["mobbing", "mobbingowi", "antymobbingowej", "dyskryminacyjnych", "regulamin_pracy", 
-                "naruszen_prawa", "wykaz_akt"],
+    "mobbing": ["mobbing", "mobbingowi", "antymobbingowej", "dyskryminacyjnych", "regulamin_pracy_ih_pan", 
+                "naruszen_prawa"],
 }
 
 
