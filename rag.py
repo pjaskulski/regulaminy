@@ -78,6 +78,42 @@ QUERY_EXPANSIONS = {
     "wysokosc": ["wysokość", "wysokości", "wysokosci"],
     "wpływa": ["zależy", "przysługuje", "uwzględnia"],
     "wplywa": ["zależy", "przysługuje", "uwzględnia"],
+    "mobbing": [
+        "mobbingu",
+        "mobbingowi",
+        "mobbingowym",
+        "mobbingowych",
+        "antymobbingowa",
+        "antymobbingowej",
+        "procedura",
+        "procedury",
+        "skarga",
+        "skargę",
+        "komisja",
+        "komisji",
+        "nękanie",
+        "nekanie",
+        "zastraszanie",
+    ],
+    "mobbingu": [
+        "mobbing",
+        "mobbingowi",
+        "mobbingowym",
+        "mobbingowych",
+        "antymobbingowa",
+        "antymobbingowej",
+        "procedura",
+        "procedury",
+        "skarga",
+        "skargę",
+        "komisja",
+        "komisji",
+        "nękanie",
+        "nekanie",
+        "zastraszanie",
+    ],
+    "antymobbingowa": ["mobbing", "mobbingu", "antymobbingowej", "procedura", "procedury", "skarga", "komisja"],
+    "antymobbingowej": ["mobbing", "mobbingu", "antymobbingowa", "procedura", "procedury", "skarga", "komisja"],
 }
 
 
@@ -232,16 +268,21 @@ class KnowledgeBase:
     def stats(self) -> dict[str, int]:
         return {"documents": len(self.documents), "chunks": len(self.chunks)}
 
-    def search(self, query: str, limit: int = 8) -> list[dict]:
+    def search(self, query: str, limit: int = 8, preferred_paths: set[str] | None = None, topic_bonus: float = 0.0) -> list[dict]:
         original_query_tokens = tokenize(query)
         query_tokens = expand_query_tokens(original_query_tokens)
         if not query_tokens:
             return []
         query_set = set(query_tokens)
+        preferred_paths = preferred_paths or set()
         scored = []
         for chunk, tokens in zip(self.chunks, self._chunk_tokens):
             overlap = query_set & tokens
+            wiki_bonus = topic_bonus if chunk.path in preferred_paths else 0.0
+            if not overlap and not wiki_bonus:
+                continue
             if not overlap:
+                scored.append((wiki_bonus * 0.5, chunk))
                 continue
             phrase_bonus = 0.0
             lowered = normalize(chunk.text)
@@ -258,7 +299,7 @@ class KnowledgeBase:
                     phrase_bonus += 0.45
             recency_bonus = 0.2 if chunk.date >= "2024-01-01" else 0.0
             change_bonus = 0.25 if chunk.is_change else 0.0
-            score = len(overlap) / math.sqrt(max(len(tokens), 1)) + phrase_bonus + recency_bonus + change_bonus
+            score = len(overlap) / math.sqrt(max(len(tokens), 1)) + phrase_bonus + recency_bonus + change_bonus + wiki_bonus
             scored.append((score, chunk))
         scored.sort(key=lambda item: (item[0], item[1].date), reverse=True)
         return [{"score": round(score, 4), **asdict(chunk)} for score, chunk in scored[:limit]]

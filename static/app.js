@@ -13,6 +13,14 @@ const documentSearchNext = document.querySelector("#document-search-next");
 const examplesModal = document.querySelector("#examples-modal");
 const examplesOpen = document.querySelector("#examples-open");
 const examplesClose = document.querySelector("#examples-close");
+const infoModal = document.querySelector("#info-modal");
+const infoOpen = document.querySelector("#info-open");
+const infoClose = document.querySelector("#info-close");
+const documentsSearchForm = document.querySelector("#documents-search-form");
+const documentsSearchQuery = document.querySelector("#documents-search-query");
+const documentsSearchClear = document.querySelector("#documents-search-clear");
+const documentsSearchStatus = document.querySelector("#documents-search-status");
+const documentsSearchResults = document.querySelector("#documents-search-results");
 const appBase = (window.APP_BASE || "").replace(/\/$/, "");
 let documentSearchHits = [];
 let documentSearchIndex = -1;
@@ -325,6 +333,32 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function highlightText(value, query) {
+  const text = String(value);
+  const needle = query.trim();
+  if (!needle) return escapeHtml(text);
+
+  const loweredText = text.toLocaleLowerCase("pl");
+  const loweredNeedle = needle.toLocaleLowerCase("pl");
+  let cursor = 0;
+  let index = loweredText.indexOf(loweredNeedle, cursor);
+  if (index === -1) return escapeHtml(text);
+
+  const parts = [];
+  while (index !== -1) {
+    if (index > cursor) {
+      parts.push(escapeHtml(text.slice(cursor, index)));
+    }
+    parts.push(`<mark class="documents-search-hit">${escapeHtml(text.slice(index, index + needle.length))}</mark>`);
+    cursor = index + needle.length;
+    index = loweredText.indexOf(loweredNeedle, cursor);
+  }
+  if (cursor < text.length) {
+    parts.push(escapeHtml(text.slice(cursor)));
+  }
+  return parts.join("");
+}
+
 function resetDocumentSearch() {
   documentSearchHits = [];
   documentSearchIndex = -1;
@@ -471,6 +505,74 @@ document.addEventListener("click", async (event) => {
   await openDocument(button.dataset.documentPath, Number(button.dataset.startLine), Number(button.dataset.endLine));
 });
 
+function setDocumentsSearchStatus(text) {
+  if (documentsSearchStatus) {
+    documentsSearchStatus.textContent = text;
+  }
+}
+
+function clearDocumentsSearch() {
+  if (documentsSearchQuery) {
+    documentsSearchQuery.value = "";
+    documentsSearchQuery.focus();
+  }
+  if (documentsSearchResults) {
+    documentsSearchResults.innerHTML = "";
+  }
+  setDocumentsSearchStatus("Wpisz szukaną frazę i uruchom wyszukiwanie.");
+}
+
+function renderDocumentsSearchResults(items, query) {
+  if (!documentsSearchResults) return;
+  documentsSearchResults.innerHTML = "";
+  items.forEach((item) => {
+    const button = document.createElement("button");
+    button.className = "document-list-item documents-search-result";
+    button.type = "button";
+    button.dataset.documentPath = item.path;
+    button.dataset.startLine = item.start_line;
+    button.dataset.endLine = item.end_line;
+    button.innerHTML = `
+      <span class="document-list-title">${escapeHtml(item.path.replace(/^md\//, ""))}</span>
+      <span class="document-list-meta">
+        ${escapeHtml(item.title)} · ${escapeHtml(item.date)} · ${escapeHtml(item.kind)}${item.is_change ? " · zmiana/aneks/uchylenie" : ""} · trafienia: ${item.match_count}
+      </span>
+      <span class="documents-search-snippet">${highlightText(item.snippet, query)}</span>
+      <span class="document-list-path">${escapeHtml(item.path)} · linia ${item.start_line}</span>
+    `;
+    documentsSearchResults.appendChild(button);
+  });
+}
+
+if (documentsSearchForm && documentsSearchQuery && documentsSearchClear) {
+  documentsSearchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const query = documentsSearchQuery.value.trim();
+    if (!query) {
+      clearDocumentsSearch();
+      return;
+    }
+
+    setDocumentsSearchStatus("Szukam w treści dokumentów...");
+    if (documentsSearchResults) documentsSearchResults.innerHTML = "";
+    try {
+      const response = await fetch(appUrl("/api/document-search"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const data = await response.json();
+      const results = data.results || [];
+      renderDocumentsSearchResults(results, query);
+      setDocumentsSearchStatus(results.length ? `Znaleziono dokumenty: ${results.length}.` : "Brak wyników.");
+    } catch (error) {
+      setDocumentsSearchStatus(`Błąd wyszukiwania: ${error}`);
+    }
+  });
+
+  documentsSearchClear.addEventListener("click", clearDocumentsSearch);
+}
+
 async function copyAnswer(button) {
   const message = button.closest(".message");
   const content = message.querySelector(".message-content");
@@ -549,6 +651,16 @@ function closeExamplesModal() {
   document.body.classList.remove("modal-open");
 }
 
+function openInfoModal() {
+  infoModal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closeInfoModal() {
+  infoModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
 if (examplesModal && examplesOpen && examplesClose && textarea) {
   examplesOpen.addEventListener("click", openExamplesModal);
   examplesClose.addEventListener("click", closeExamplesModal);
@@ -563,6 +675,16 @@ if (examplesModal && examplesOpen && examplesClose && textarea) {
     textarea.value = button.textContent.trim();
     textarea.focus();
     closeExamplesModal();
+  });
+}
+
+if (infoModal && infoOpen && infoClose) {
+  infoOpen.addEventListener("click", openInfoModal);
+  infoClose.addEventListener("click", closeInfoModal);
+  infoModal.addEventListener("click", (event) => {
+    if (event.target.matches("[data-close-info]")) {
+      closeInfoModal();
+    }
   });
 }
 
@@ -591,6 +713,7 @@ if (documentSearchNext) {
 }
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
+  if (infoModal && !infoModal.hidden) closeInfoModal();
   if (examplesModal && !examplesModal.hidden) closeExamplesModal();
   if (!modal.hidden) closeModal();
 });

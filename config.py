@@ -36,6 +36,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-change-this-secret-key")
 
 MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "18000"))
 SEARCH_LIMIT = int(os.getenv("SEARCH_LIMIT", "8"))
+WIKI_TOPIC_BONUS = float(os.getenv("WIKI_TOPIC_BONUS", "0.45"))
 GEMINI_MAX_OUTPUT_TOKENS = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "3000"))
 TRACE_RAG = env_flag("REGULAMINY_TRACE_RAG")
 TRACE_RAG_FULL = os.getenv("REGULAMINY_TRACE_RAG", "").casefold() in {"full", "verbose", "context"}

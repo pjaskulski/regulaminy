@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -172,3 +173,87 @@ Przygotuj odpowiedź dla pracownika instytutu. Nie wychodź poza podane fragment
 
 def answer_with_gemini(question: str, chunks: list[dict[str, Any]]) -> str:
     return answer_with_gemini_details(question, chunks).text
+
+
+def topic_selection_prompt(question: str, topics: list[dict[str, Any]]) -> str:
+    topic_lines: list[str] = []
+    for topic in topics:
+        documents = topic.get("documents") or []
+        document_lines = []
+        for document in documents:
+            title = getattr(document, "title", "")
+            path = getattr(document, "path", "")
+            document_lines.append(f"  - {title} ({path})")
+        topic_lines.append(
+            f"ID: {topic['id']}\n"
+            f"Nazwa: {topic['title']}\n"
+            "Dokumenty:\n"
+            + "\n".join(document_lines[:30])
+        )
+
+    return f"""Pytanie użytkownika:
+{question}
+
+Tematy wiki:
+{chr(10).join(topic_lines)}
+
+Wybierz tematy wiki, które są wyraźnie związane z pytaniem użytkownika.
+Możesz wybrać jeden temat, kilka tematów albo żadnego, jeśli nic wyraźnie nie pasuje.
+Nie wybieraj tematu tylko dlatego, że pojedyncze ogólne słowo występuje w pytaniu.
+Zwróć wyłącznie JSON w formacie:
+{{"topics": ["id-tematu"]}}
+"""
+
+
+def parse_selected_topic_ids(text: str, allowed_ids: set[str]) -> list[str]:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*", "", stripped)
+        stripped = re.sub(r"\s*```$", "", stripped)
+    try:
+        payload = json.loads(stripped)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", stripped, re.DOTALL)
+        if not match:
+            return []
+        try:
+            payload = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return []
+
+    raw_topics = payload.get("topics") if isinstance(payload, dict) else None
+    if not isinstance(raw_topics, list):
+        return []
+
+    selected: list[str] = []
+    for item in raw_topics:
+        if not isinstance(item, str) or item not in allowed_ids or item in selected:
+            continue
+        selected.append(item)
+    return selected
+
+
+def select_wiki_topics(question: str, topics: list[dict[str, Any]]) -> tuple[list[str], dict[str, Any]]:
+    if not GOOGLE_API_KEY or not topics:
+        return [], {"fallback": "missing_api_key_or_topics"}
+
+    from google import genai
+    from google.genai import types
+
+    allowed_ids = {topic["id"] for topic in topics}
+    client = genai.Client(api_key=GOOGLE_API_KEY)
+    prompt = topic_selection_prompt(question, topics)
+    try:
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                maxOutputTokens=500,
+            ),
+        )
+    except Exception as exc:
+        return [], {"fallback": "exception", "exception_type": type(exc).__name__}
+
+    text = response.text or ""
+    return parse_selected_topic_ids(text, allowed_ids), response_metadata(response) | {"raw_text": text}

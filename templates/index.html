@@ -16,6 +16,7 @@
         </div>
         <div class="topbar-actions">
           <a class="documents-link" href="{{ url_for('documents') }}" rel="noopener">Dokumenty</a>
+          <button class="topbar-button" id="info-open" type="button">Info</button>
           <form method="post" action="{{ url_for('logout') }}">
             <button class="logout-button" type="submit">Wyloguj</button>
           </form>
@@ -61,6 +62,31 @@
           <button type="button" class="example-question">Jaki jest skład Komisji Socjalnej w Instytucie Historii?</button>
           <button type="button" class="example-question">Jakie dodatkowe dni wolne obowiązują w 2026 roku w Instytucie Historii?</button>
           <button type="button" class="example-question">Czuję, że kierownik stosuje wobec mnie mobbing. Co mogę zrobić?</button>
+          <button type="button" class="example-question">Podejrzewam, że jeden z pracowników dopuścił się naruszenia prawa. Gdzie mogę to zgłosić?</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal" id="info-modal" hidden>
+      <div class="modal-backdrop" data-close-info></div>
+      <section class="modal-panel info-panel" role="dialog" aria-modal="true" aria-labelledby="info-title">
+        <header class="modal-header">
+          <div>
+            <h2 id="info-title">Informacje o aplikacji</h2>
+          </div>
+          <button id="info-close" type="button" title="Zamknij">×</button>
+        </header>
+        <div class="info-content">
+          <p>Zadaniem aplikacji jest ułatwienie wyszukiwania informacji w regulaminach i zarządzeniach obowiązujących w Instytucie Historii PAN.</p>
+          <p>Teksty dokumentów używane w aplikacji pochodzą z plików PDF i DOCX dostępnych dla pracowników Instytutu. Te z nich, które były skanami dokumentów, zostały automatycznie poddane procesowi OCR w celu wydobycia tekstu.</p>
+          <p>W tekstach dokumentów mogą znajdować się literówki i inne błędy odczytu. Aplikacja powstała w 1 dzień, nie było więc czasu na szczegółową weryfikację, co być może uda się naprawić w przyszłości.</p>
+          <p>Aplikacja ma dwa główne moduły:</p>
+          <h3>Chat</h3>
+          <p>Można w nim zadawać pytania, które powinny być konkretne i zwięzłe, co ułatwia uzyskanie precyzyjnej odpowiedzi. Chat odpowiada na pytania użytkownika za pomocą modelu językowego, ale w obecnej wersji nie obsługuje dyskusji z użytkownikiem na temat poprzednich odpowiedzi w wątku. Każde pytanie jest osobną procedurą.</p>
+          <h3>Dokumenty</h3>
+          <p>Wyświetlana jest tu lista dokumentów: regulaminów, zarządzeń i aneksów, w postaci chronologicznej listy 
+            albo w podziale na tematy. Treść dokumentów można wyświetlić i przeszukiwać. Można też przeszukiwać pełnotekstowo 
+            caly zbiór dokumentów w zakładce: Wyszukiwanie.</p>
         </div>
       </section>
     </div>

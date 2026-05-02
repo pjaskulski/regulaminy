@@ -10,11 +10,12 @@
     <main class="shell documents-shell">
       <section class="topbar">
         <div>
-          <h1>Dokumenty Markdown</h1>
+          <h1>Dokumenty (regulaminy i zarządzenia Instytutu Historii PAN)</h1>
           <p>Liczba dokumentów: {{ stats.documents }}.</p>
         </div>
         <div class="topbar-actions">
           <a class="documents-link" href="{{ url_for('index') }}">Chat</a>
+          <button class="topbar-button" id="info-open" type="button">Info</button>
           <form method="post" action="{{ url_for('logout') }}">
             <button class="logout-button" type="submit">Wyloguj</button>
           </form>
@@ -36,6 +37,13 @@
         >
           Tematycznie
         </a>
+        <a
+          class="documents-view-link{% if current_view == 'search' %} active{% endif %}"
+          href="{{ url_for('documents', view='search') }}"
+          aria-current="{% if current_view == 'search' %}page{% else %}false{% endif %}"
+        >
+          Wyszukiwanie
+        </a>
       </nav>
 
       {% macro document_button(document) -%}
@@ -52,7 +60,17 @@
         </button>
       {%- endmacro %}
 
-      {% if current_view == 'topics' %}
+      {% if current_view == 'search' %}
+        <section class="documents-search-view" aria-label="Wyszukiwanie pełnotekstowe">
+          <form class="documents-search-form" id="documents-search-form">
+            <input id="documents-search-query" type="search" placeholder="Wpisz słowo lub wyrażenie" autocomplete="off">
+            <button id="documents-search-submit" type="submit">Szukaj</button>
+            <button id="documents-search-clear" type="button">Wyczyść</button>
+          </form>
+          <p class="documents-search-status" id="documents-search-status">Wpisz szukaną frazę i uruchom wyszukiwanie.</p>
+          <section class="documents-list documents-search-results" id="documents-search-results" aria-label="Wyniki wyszukiwania pełnotekstowego"></section>
+        </section>
+      {% elif current_view == 'topics' %}
         <section class="documents-list documents-topic-list" aria-label="Dokumenty Markdown według tematów">
           {% for topic in document_topics %}
             <details class="documents-topic">
@@ -85,6 +103,30 @@
         </section>
       {% endif %}
     </main>
+
+    <div class="modal" id="info-modal" hidden>
+      <div class="modal-backdrop" data-close-info></div>
+      <section class="modal-panel info-panel" role="dialog" aria-modal="true" aria-labelledby="info-title">
+        <header class="modal-header">
+          <div>
+            <h2 id="info-title">Informacje o aplikacji</h2>
+          </div>
+          <button id="info-close" type="button" title="Zamknij">×</button>
+        </header>
+        <div class="info-content">
+          <p>Zadaniem aplikacji jest ułatwienie wyszukiwania informacji w regulaminach i zarządzeniach obowiązujących w Instytucie Historii PAN.</p>
+          <p>Teksty dokumentów używane w aplikacji pochodzą z plików PDF i DOCX dostępnych dla pracowników Instytutu. Te z nich, które były skanami dokumentów, zostały automatycznie poddane procesowi OCR w celu wydobycia tekstu.</p>
+          <p>W tekstach dokumentów mogą znajdować się literówki i inne błędy odczytu. Aplikacja powstała w 1 dzień, nie było więc czasu na szczegółową weryfikację, co być może uda się naprawić w przyszłości.</p>
+          <p>Aplikacja ma dwa główne moduły:</p>
+          <h3>Chat</h3>
+          <p>Można w nim zadawać pytania, które powinny być konkretne i zwięzłe, co ułatwia uzyskanie precyzyjnej odpowiedzi. Chat odpowiada na pytania użytkownika za pomocą modelu językowego, ale w obecnej wersji nie obsługuje dyskusji z użytkownikiem na temat poprzednich odpowiedzi w wątku. Każde pytanie jest osobną procedurą.</p>
+          <h3>Dokumenty</h3>
+          <p>Wyświetlana jest tu lista dokumentów: regulaminów, zarządzeń i aneksów, w postaci chronologicznej listy albo 
+            w podziale na tematy. Treść dokumentów można wyświetlić i przeszukiwać. Można też przeszukiwać pełnotekstowo caly 
+            zbiór dokumentów w zakładce: Wyszukiwanie.</p>
+        </div>
+      </section>
+    </div>
 
     <div class="modal" id="document-modal" hidden>
       <div class="modal-backdrop" data-close-modal></div>
