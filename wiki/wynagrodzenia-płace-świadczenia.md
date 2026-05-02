@@ -5,12 +5,6 @@ Ta strona jest automatycznie wygenerowaną mapą źródeł. Nie zastępuje dokum
 ## Najbardziej powiązane dokumenty
 
 - 2025-12-02 - `md/2025-12-02_Zarzadzenie_21_2025_Dodatkowe_dni_wolne_2026.md` - Zarządzenie nr 21/2025 w sprawie ustalenia dodatkowych dni wolnych od pracy dla pracowników
-- 2025-04-29 - `md/2025-04-29_Regulamin_ZFSS_Zalacznik-Nr-2-Tabela_Wysokosc_swiadczen_z_ZFSS.md` - Załącznik Nr 2 do Regulaminu
-- 2025-04-29 - `md/2025_04-29_Zarzadzenie-7-2025_Regulamin-Zakladowego-Funduszu-Swiadczen-Socjalnych.md` - Zarządzenie nr 7/2025
-- 2025-04-29 - `md/2025-04-29_Zarzadzenie_7_2025_Regulamin_Zakladowego_Funduszu_Swiadczen_Socjalnych.md` - Zarządzenie nr 7/2O25 w sprawie ustalenia Regulaminu Zakładowego Funduszu Świadczeń Socjalnych
-- 2024-11-19 - `md/2024-11-19_Zarzadzenie_21_2024_ZFSS.md` - Zarządzenie nr 21/2024 zmieniające Regulamin Zakładowego Funduszu Świadczeń Socjalnych (zmiana/aneks/uchylenie)
-- 2024-02-07 - `md/2024-02-07_Zarzadzenie_4_2024_Regulamin_organizacyjny.md` - Zarządzenie Nr 4/2024 w sprawie wprowadzenia Regulaminu organizacyjnego (zmiana/aneks/uchylenie)
-- 2023-12-19 - `md/2023-12-19_Zarzadzenie_23_2023_ZFSS.md` - zmieniające Regulamin Zakładowego Funduszu Świadczeń Socjalnych Działając na podstawie art. 54 ust. (zmiana/aneks/uchylenie)
 - 2023-02-10 - `md/2023-02-10_Aneks_nr_2_Zarzadzenie_10_2021.md` - Aneks Nr 2 z dnia 10 lutego 2023 r. Do Zarządzenia nr 10/2021 Dyrektora Instytutu Historii im. Tadeusza Manteuffla (zmiana/aneks/uchylenie)
 - 2022-12-29 - `md/2022-12-29_Zarzadzenie_18_2022_zmieniajace_regulamin_wynagradzania.md` - .zarządzenie nr 18/2022 zmieniające zarządzenie nr 10/2021 Dyrektora IH PAN z dnia 20 października 2021 r. (zmiana/aneks/uchylenie)
 - 2022-03-10 - `md/2022-03-10_Aneks_nr_1_Zarzadzenie_10_2021.md` - Aneks Nr 1 z dnia 10 marca 2022 r. Do Zarządzenia nr 10/2021 Dyrektora Instytutu Historii im. Tadeusza Manteuffla (zmiana/aneks/uchylenie)

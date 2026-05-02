@@ -473,6 +473,69 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.document-search {
+  display: grid;
+  gap: 4px;
+  width: min(300px, 38vw);
+  margin-left: auto;
+}
+
+.document-search input {
+  width: 100%;
+  height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfbfa;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.document-search input:focus {
+  outline: 2px solid #b7d3c9;
+  outline-offset: 1px;
+  border-color: #8ab8a8;
+  background: #fff;
+}
+
+.document-search-controls {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.document-search-controls span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.document-search-controls button {
+  min-width: 28px;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border-color: var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--accent-dark);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.document-search-controls button:hover:not(:disabled) {
+  border-color: #8ab8a8;
+  background: #e9f3ef;
+}
+
+.document-search-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 #document-close {
   flex: 0 0 auto;
 }
@@ -546,8 +609,50 @@ textarea {
   padding-left: 4px;
 }
 
+.document-content mark.document-search-hit {
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: #b7f0c1;
+  color: inherit;
+  box-shadow: inset 0 0 0 1px #59a869;
+}
+
+.document-content mark.document-search-hit.active {
+  background: #ffc766;
+  box-shadow: inset 0 0 0 2px #c16d12;
+}
+
 .documents-shell {
   max-width: 1100px;
+}
+
+.documents-view-switch {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.documents-view-link {
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.documents-view-link:hover {
+  background: #e9f3ef;
+}
+
+.documents-view-link.active {
+  background: var(--accent);
+  color: #fff;
 }
 
 .documents-list {
@@ -559,6 +664,90 @@ textarea {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.documents-topic-list {
+  align-content: start;
+}
+
+.documents-topic {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfbfa;
+}
+
+.documents-topic[open] {
+  background: #fff;
+}
+
+.documents-topic summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.documents-topic summary::-webkit-details-marker {
+  display: none;
+}
+
+.documents-topic summary:hover {
+  background: #f2f8f5;
+}
+
+.documents-topic-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.documents-topic-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent-dark);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.documents-topic[open] .documents-topic-toggle {
+  transform: rotate(90deg);
+  background: #e9f3ef;
+}
+
+.documents-topic-title {
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.documents-topic-count {
+  min-width: 30px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8eee9;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.documents-topic-documents {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
 }
 
 .document-list-item {
@@ -626,5 +815,16 @@ textarea {
   .modal-panel {
     width: calc(100vw - 20px);
     max-height: calc(100vh - 20px);
+  }
+
+  .modal-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .document-search {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-left: 0;
   }
 }

@@ -25,7 +25,8 @@
       <section class="chat" id="messages">
         <article class="message assistant">
           <p>Zadaj pytanie dotyczące regulaminów lub zarządzeń obowiązujących 
-            w Instytucie Historii PAN.</p>
+            w Instytucie Historii PAN. Aplikacja wykorzystuje model językowy, 
+            czas oczekiwania na odpowiedź może być długi (od kilku do kilkudziesięciu sekund).</p>
         </article>
       </section>
 
@@ -71,6 +72,14 @@
           <div>
             <h2 id="document-title">Dokument</h2>
             <p id="document-path"></p>
+          </div>
+          <div class="document-search" role="search">
+            <input id="document-search" type="search" placeholder="Szukaj w dokumencie" autocomplete="off">
+            <div class="document-search-controls">
+              <span id="document-search-count" aria-live="polite"></span>
+              <button id="document-search-prev" type="button" title="Poprzedni wynik" disabled>‹</button>
+              <button id="document-search-next" type="button" title="Następny wynik" disabled>›</button>
+            </div>
           </div>
           <button id="document-close" type="button" title="Zamknij">×</button>
         </header>

@@ -21,23 +21,69 @@
         </div>
       </section>
 
-      <section class="documents-list" aria-label="Lista dokumentów Markdown">
-        {% for document in documents %}
-          <button
-            class="document-list-item"
-            type="button"
-            data-document-path="{{ document.path }}"
-          >
-            <span class="document-list-title">{{ document.path|replace("md/", "") }}</span>
-            <span class="document-list-meta">
-              {{ document.title }} · {{ document.date }} · {{ document.kind }}{% if document.is_change %} · zmiana/aneks/uchylenie{% endif %}
-            </span>
-            <span class="document-list-path">{{ document.path }}</span>
-          </button>
-        {% else %}
-          <p>Brak dokumentów Markdown.</p>
-        {% endfor %}
-      </section>
+      <nav class="documents-view-switch" aria-label="Sposób wyświetlania dokumentów">
+        <a
+          class="documents-view-link{% if current_view == 'chronological' %} active{% endif %}"
+          href="{{ url_for('documents', view='chronological') }}"
+          aria-current="{% if current_view == 'chronological' %}page{% else %}false{% endif %}"
+        >
+          Chronologicznie
+        </a>
+        <a
+          class="documents-view-link{% if current_view == 'topics' %} active{% endif %}"
+          href="{{ url_for('documents', view='topics') }}"
+          aria-current="{% if current_view == 'topics' %}page{% else %}false{% endif %}"
+        >
+          Tematycznie
+        </a>
+      </nav>
+
+      {% macro document_button(document) -%}
+        <button
+          class="document-list-item"
+          type="button"
+          data-document-path="{{ document.path }}"
+        >
+          <span class="document-list-title">{{ document.path|replace("md/", "") }}</span>
+          <span class="document-list-meta">
+            {{ document.title }} · {{ document.date }} · {{ document.kind }}{% if document.is_change %} · zmiana/aneks/uchylenie{% endif %}
+          </span>
+          <span class="document-list-path">{{ document.path }}</span>
+        </button>
+      {%- endmacro %}
+
+      {% if current_view == 'topics' %}
+        <section class="documents-list documents-topic-list" aria-label="Dokumenty Markdown według tematów">
+          {% for topic in document_topics %}
+            <details class="documents-topic">
+              <summary>
+                <span class="documents-topic-label">
+                  <span class="documents-topic-toggle" aria-hidden="true">›</span>
+                  <span class="documents-topic-title">{{ topic.title }}</span>
+                </span>
+                <span class="documents-topic-count">{{ topic.documents|length }}</span>
+              </summary>
+              <div class="documents-topic-documents">
+                {% for document in topic.documents %}
+                  {{ document_button(document) }}
+                {% else %}
+                  <p>Brak dokumentów przypisanych do tematu.</p>
+                {% endfor %}
+              </div>
+            </details>
+          {% else %}
+            <p>Brak wygenerowanej struktury tematów w katalogu wiki.</p>
+          {% endfor %}
+        </section>
+      {% else %}
+        <section class="documents-list" aria-label="Lista dokumentów Markdown">
+          {% for document in documents %}
+            {{ document_button(document) }}
+          {% else %}
+            <p>Brak dokumentów Markdown.</p>
+          {% endfor %}
+        </section>
+      {% endif %}
     </main>
 
     <div class="modal" id="document-modal" hidden>
@@ -47,6 +93,14 @@
           <div>
             <h2 id="document-title">Dokument</h2>
             <p id="document-path"></p>
+          </div>
+          <div class="document-search" role="search">
+            <input id="document-search" type="search" placeholder="Szukaj w dokumencie" autocomplete="off">
+            <div class="document-search-controls">
+              <span id="document-search-count" aria-live="polite"></span>
+              <button id="document-search-prev" type="button" title="Poprzedni wynik" disabled>‹</button>
+              <button id="document-search-next" type="button" title="Następny wynik" disabled>›</button>
+            </div>
           </div>
           <button id="document-close" type="button" title="Zamknij">×</button>
         </header>

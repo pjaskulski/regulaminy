@@ -6,10 +6,16 @@ const modalTitle = document.querySelector("#document-title");
 const modalPath = document.querySelector("#document-path");
 const modalContent = document.querySelector("#document-content");
 const modalClose = document.querySelector("#document-close");
+const documentSearch = document.querySelector("#document-search");
+const documentSearchCount = document.querySelector("#document-search-count");
+const documentSearchPrev = document.querySelector("#document-search-prev");
+const documentSearchNext = document.querySelector("#document-search-next");
 const examplesModal = document.querySelector("#examples-modal");
 const examplesOpen = document.querySelector("#examples-open");
 const examplesClose = document.querySelector("#examples-close");
 const appBase = (window.APP_BASE || "").replace(/\/$/, "");
+let documentSearchHits = [];
+let documentSearchIndex = -1;
 
 function appUrl(path) {
   return `${appBase}${path}`;
@@ -319,6 +325,100 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function resetDocumentSearch() {
+  documentSearchHits = [];
+  documentSearchIndex = -1;
+  if (documentSearch) {
+    documentSearch.value = "";
+  }
+  updateDocumentSearchControls();
+}
+
+function clearDocumentSearchHighlights() {
+  const marks = Array.from(modalContent.querySelectorAll("mark.document-search-hit"));
+  marks.forEach((mark) => {
+    mark.replaceWith(document.createTextNode(mark.textContent || ""));
+  });
+  modalContent.normalize();
+}
+
+function updateDocumentSearchControls() {
+  if (documentSearchCount) {
+    if (!documentSearchHits.length) {
+      documentSearchCount.textContent = documentSearch && documentSearch.value.trim() ? "0 wyników" : "";
+    } else {
+      documentSearchCount.textContent = `${documentSearchIndex + 1}/${documentSearchHits.length}`;
+    }
+  }
+  const disabled = documentSearchHits.length === 0;
+  if (documentSearchPrev) documentSearchPrev.disabled = disabled;
+  if (documentSearchNext) documentSearchNext.disabled = disabled;
+}
+
+function activateDocumentSearchHit(index) {
+  if (!documentSearchHits.length) {
+    documentSearchIndex = -1;
+    updateDocumentSearchControls();
+    return;
+  }
+  documentSearchHits.forEach((hit) => hit.classList.remove("active"));
+  documentSearchIndex = (index + documentSearchHits.length) % documentSearchHits.length;
+  const hit = documentSearchHits[documentSearchIndex];
+  hit.classList.add("active");
+  hit.scrollIntoView({ block: "center" });
+  updateDocumentSearchControls();
+}
+
+function highlightDocumentSearch(query) {
+  clearDocumentSearchHighlights();
+  documentSearchHits = [];
+  documentSearchIndex = -1;
+  const needle = query.trim();
+  if (!needle) {
+    updateDocumentSearchControls();
+    return;
+  }
+
+  const textNodes = [];
+  const walker = document.createTreeWalker(modalContent, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    },
+  });
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode);
+  }
+
+  const loweredNeedle = needle.toLocaleLowerCase("pl");
+  textNodes.forEach((node) => {
+    const text = node.nodeValue;
+    const loweredText = text.toLocaleLowerCase("pl");
+    let cursor = 0;
+    let index = loweredText.indexOf(loweredNeedle, cursor);
+    if (index === -1) return;
+
+    const fragment = document.createDocumentFragment();
+    while (index !== -1) {
+      if (index > cursor) {
+        fragment.appendChild(document.createTextNode(text.slice(cursor, index)));
+      }
+      const mark = document.createElement("mark");
+      mark.className = "document-search-hit";
+      mark.textContent = text.slice(index, index + needle.length);
+      fragment.appendChild(mark);
+      documentSearchHits.push(mark);
+      cursor = index + needle.length;
+      index = loweredText.indexOf(loweredNeedle, cursor);
+    }
+    if (cursor < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(cursor)));
+    }
+    node.replaceWith(fragment);
+  });
+
+  activateDocumentSearchHit(0);
+}
+
 if (form && textarea && messages) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -425,6 +525,7 @@ function showModal(title, path, markdown, startLine, endLine) {
   modalTitle.textContent = title;
   modalPath.textContent = startLine && endLine ? `${path} · linie ${startLine}-${endLine}` : path;
   modalContent.innerHTML = renderDocumentMarkdown(markdown || "", startLine, endLine);
+  resetDocumentSearch();
   modal.hidden = false;
   document.body.classList.add("modal-open");
   const firstHit = modalContent.querySelector(".source-hit");
@@ -469,6 +570,25 @@ modalClose.addEventListener("click", closeModal);
 modal.addEventListener("click", (event) => {
   if (event.target.matches("[data-close-modal]")) closeModal();
 });
+
+if (documentSearch) {
+  documentSearch.addEventListener("input", () => {
+    highlightDocumentSearch(documentSearch.value);
+  });
+  documentSearch.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || !documentSearchHits.length) return;
+    event.preventDefault();
+    activateDocumentSearchHit(documentSearchIndex + (event.shiftKey ? -1 : 1));
+  });
+}
+
+if (documentSearchPrev) {
+  documentSearchPrev.addEventListener("click", () => activateDocumentSearchHit(documentSearchIndex - 1));
+}
+
+if (documentSearchNext) {
+  documentSearchNext.addEventListener("click", () => activateDocumentSearchHit(documentSearchIndex + 1));
+}
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   if (examplesModal && !examplesModal.hidden) closeExamplesModal();

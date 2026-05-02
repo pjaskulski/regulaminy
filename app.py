@@ -8,7 +8,7 @@ from pathlib import Path
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from config import APP_TITLE, AUTH_PASSWORD, AUTH_USERNAME, MD_DIR, SEARCH_LIMIT, SECRET_KEY, TRACE_RAG, TRACE_RAG_FULL
+from config import APP_TITLE, AUTH_PASSWORD, AUTH_USERNAME, MD_DIR, SEARCH_LIMIT, SECRET_KEY, TRACE_RAG, TRACE_RAG_FULL, WIKI_DIR
 from llm import answer_with_gemini_details, attach_source_ids, build_context, cited_sources
 from rag import KnowledgeBase
 
@@ -19,6 +19,10 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 kb = KnowledgeBase(MD_DIR)
 if TRACE_RAG:
     app.logger.setLevel(logging.INFO)
+
+
+WIKI_TOPIC_RE = re.compile(r"^-\s+\[(?P<title>[^\]]+)\]\((?P<filename>[^)]+)\)\s*$")
+WIKI_DOCUMENT_RE = re.compile(r"^-\s+(?P<date>.+?)\s+-\s+`(?P<path>md/[^`]+\.md)`\s+-\s+(?P<title>.+?)\s*$")
 
 
 def is_authenticated() -> bool:
@@ -85,6 +89,60 @@ def merge_chunks(*chunk_groups: list[dict]) -> list[dict]:
             seen.add(key)
             merged.append(chunk)
     return merged
+
+
+def wiki_topic_title(path: Path, fallback: str) -> str:
+    if not path.exists():
+        return fallback.replace("-", " ")
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("# "):
+            return line.removeprefix("# ").strip()
+    return fallback.replace("-", " ")
+
+
+def wiki_document_paths(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    paths: list[str] = []
+    seen: set[str] = set()
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = WIKI_DOCUMENT_RE.match(line.strip())
+        if not match:
+            continue
+        document_path = match.group("path")
+        if document_path not in seen:
+            paths.append(document_path)
+            seen.add(document_path)
+    return paths
+
+
+def wiki_topics() -> list[dict]:
+    index_path = WIKI_DIR / "index.md"
+    if not index_path.exists():
+        return []
+
+    documents_by_path = {document.path: document for document in kb.documents}
+    topics: list[dict] = []
+    for line in index_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = WIKI_TOPIC_RE.match(line.strip())
+        if not match:
+            continue
+
+        topic_file = WIKI_DIR / Path(match.group("filename")).name
+        topic_documents = [
+            documents_by_path[path]
+            for path in wiki_document_paths(topic_file)
+            if path in documents_by_path
+        ]
+        topic_documents.sort(key=lambda document: (document.date, document.title), reverse=True)
+        topics.append(
+            {
+                "id": topic_file.stem,
+                "title": wiki_topic_title(topic_file, match.group("title")),
+                "documents": topic_documents,
+            }
+        )
+    return topics
 
 
 def adaptive_answer(question: str, chunks: list[dict]) -> tuple[str, list[dict], list[str], dict]:
@@ -200,10 +258,15 @@ def index():
 
 @app.get("/documents")
 def documents():
+    view = request.args.get("view", "chronological")
+    if view not in {"chronological", "topics"}:
+        view = "chronological"
     return render_template(
         "documents.html",
         title=APP_TITLE,
         documents=sorted(kb.documents, key=lambda document: (document.date, document.title), reverse=True),
+        document_topics=wiki_topics(),
+        current_view=view,
         stats=kb.stats(),
     )
 
